@@ -111,7 +111,15 @@ class BaseFansub:
         self.redis.set(url, data, ex=ex)
 
 
-class YYeTsOnline(BaseFansub):
+class YYeTsBase(BaseFansub):
+    @property
+    def id(self):
+        # implement how to get the unique id for this resource
+        rid = self.url.split('/')[-1]
+        return rid
+
+
+class YYeTsOnline(YYeTsBase):
     label = "yyets online"
     cookie_file = os.path.join("data", "cookies.dump")
 
@@ -190,7 +198,7 @@ class YYeTsOnline(BaseFansub):
         return share_url, api_response
 
 
-class YYeTsOffline(BaseFansub):
+class YYeTsOffline(YYeTsBase):
     label = "yyets offline"
 
     def search_preview(self, search_text: str) -> dict:
@@ -213,8 +221,10 @@ class YYeTsOffline(BaseFansub):
     def search_result(self, resource_url) -> dict:
         self.url = resource_url
         query_url = WORKERS.format(id=self.id)
+        api_res = requests.get(query_url).json()
+        cnname = api_res["data"]["info"]["cnname"]
         # for universal purpose, we return the same structure.
-        self.data = {"all": None, "share": query_url, "cnname": None}
+        self.data = {"all": api_res, "share": query_url, "cnname": cnname}
         return self.data
 
 
@@ -245,6 +255,7 @@ class ZimuxiaOnline(BaseFansub):
             # Warning: we can't simple return url here.
             # Telegram bot button callback data must be less than 64bytes.
             # Therefore we use sha1 to hash the url, save to redis.
+            # TODO wordpress search content and title, some cases it would be troublesome
             url = link.a['href']
             url_hash = hashlib.sha1(url.encode('u8')).hexdigest()
             name = link.a.text
