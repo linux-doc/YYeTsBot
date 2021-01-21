@@ -296,7 +296,7 @@ class FansubEntrance(BaseFansub):
             source = result.pop("source")
             if result:
                 logging.info("Result hit in %s", sub)
-                FansubEntrance.fansub_class = sub
+                FansubEntrance.fansub_class = class_
                 result["source"] = source
                 return result
 
